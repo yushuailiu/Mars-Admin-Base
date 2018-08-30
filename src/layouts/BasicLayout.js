@@ -14,7 +14,6 @@ import SiderMenu from '../components/SiderMenu';
 import NotFound from '../routes/Exception/404';
 import { getRoutes } from '../utils/utils';
 import Authorized from '../utils/Authorized';
-import { getMenuData } from '../common/menu';
 import logo from '../assets/logo.svg';
 
 const { Content, Header, Footer } = Layout;
@@ -37,7 +36,6 @@ const getRedirect = item => {
     }
   }
 };
-getMenuData().forEach(getRedirect);
 
 /**
  * 获取面包屑映射
@@ -88,11 +86,10 @@ enquireScreen(b => {
   isMobile = b;
 });
 
-@connect(({ user, global = {}, loading }) => ({
-  currentUser: user.currentUser,
-  collapsed: global.collapsed,
+@connect(({ User, Global, loading }) => ({
+  collapsed: Global.collapsed,
   fetchingNotices: loading.effects['global/fetchNotices'],
-  notices: global.notices,
+  notices: Global.notices,
 }))
 export default class BasicLayout extends React.PureComponent {
   static childContextTypes = {
@@ -108,7 +105,7 @@ export default class BasicLayout extends React.PureComponent {
     const { location, routerData } = this.props;
     return {
       location,
-      breadcrumbNameMap: getBreadcrumbNameMap(getMenuData(), routerData),
+      breadcrumbNameMap: routerData,
     };
   }
 
@@ -184,15 +181,14 @@ export default class BasicLayout extends React.PureComponent {
   };
 
   handleMenuClick = ({ key }) => {
-    const { dispatch } = this.props;
-    if (key === 'triggerError') {
-      dispatch(routerRedux.push('/exception/trigger'));
-      return;
-    }
+    const { history } = this.props;
     if (key === 'logout') {
-      dispatch({
-        type: 'login/logout',
+      this.props.dispatch({
+        type: 'Login/logout',
       });
+    }
+    if (key === 'user') {
+      history.push('/user/info');
     }
   };
 
@@ -212,6 +208,7 @@ export default class BasicLayout extends React.PureComponent {
       fetchingNotices,
       notices,
       routerData,
+      menuData,
       match,
       location,
     } = this.props;
@@ -225,7 +222,7 @@ export default class BasicLayout extends React.PureComponent {
           // If you do not have the Authorized parameter
           // you will be forced to jump to the 403 interface without permission
           Authorized={Authorized}
-          menuData={getMenuData()}
+          menuData={menuData}
           collapsed={collapsed}
           location={location}
           isMobile={mb}
@@ -242,28 +239,24 @@ export default class BasicLayout extends React.PureComponent {
               isMobile={mb}
               onNoticeClear={this.handleNoticeClear}
               onCollapse={this.handleMenuCollapse}
-              onMenuClick={this.handleMenuClick}
+              onMenuClick={this.handleMenuClick.bind(this)}
               onNoticeVisibleChange={this.handleNoticeVisibleChange}
             />
           </Header>
           <Content style={{ margin: '24px 24px 0', height: '100%' }}>
-            <Switch>
-              {redirectData.map(item => (
-                <Redirect key={item.from} exact from={item.from} to={item.to} />
-              ))}
-              {getRoutes(match.path, routerData).map(item => (
-                <AuthorizedRoute
-                  key={item.key}
-                  path={item.path}
-                  component={item.component}
-                  exact={item.exact}
-                  authority={item.authority}
-                  redirectPath="/exception/403"
-                />
-              ))}
-              <Redirect exact from="/" to={baseRedirect} />
-              <Route render={NotFound} />
-            </Switch>
+            <div style={{ minHeight: 'calc(100vh - 260px)' }}>
+              <Switch>
+                {getRoutes(match.path, routerData).map(item => (
+                  <Route
+                    key={item.key}
+                    path={item.path}
+                    component={item.component}
+                    redirectPath="/exception/403"
+                  />
+                ))}
+                <Route render={NotFound} />
+              </Switch>
+            </div>
           </Content>
           <Footer style={{ padding: 0 }}>
             <GlobalFooter

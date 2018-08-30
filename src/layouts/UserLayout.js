@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { Link, Redirect, Switch, Route } from 'dva/router';
+import { Link, Switch, Route } from 'dva/router';
 import DocumentTitle from 'react-document-title';
 import { Icon } from 'antd';
 import GlobalFooter from '../components/GlobalFooter';
@@ -31,14 +31,6 @@ const copyright = (
   </Fragment>
 );
 
-function getLoginPathWithRedirectPath() {
-  const params = getPageQuery();
-  const { redirect } = params;
-  return getQueryPath('/user/login', {
-    redirect,
-  });
-}
-
 class UserLayout extends React.PureComponent {
   getPageTitle() {
     const { routerData, location } = this.props;
@@ -67,14 +59,8 @@ class UserLayout extends React.PureComponent {
             </div>
             <Switch>
               {getRoutes(match.path, routerData).map(item => (
-                <Route
-                  key={item.key}
-                  path={item.path}
-                  component={item.component}
-                  exact={item.exact}
-                />
+                <Route key={item.key} component={item.component} exact={item.exact} />
               ))}
-              <Redirect from="/user" to={getLoginPathWithRedirectPath()} />
             </Switch>
           </div>
           <GlobalFooter links={links} copyright={copyright} />

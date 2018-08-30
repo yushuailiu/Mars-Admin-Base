@@ -13,12 +13,15 @@ import './index.less';
 const app = dva({
   history: createHistory(),
 });
-
+window.app = app;
 // 2. Plugins
 app.use(createLoading());
 
 // 3. Register global model
-app.model(require('./models/global').default);
+// todo Global名称修改，这里后面如果做notify模块，可以改成这个。
+app.model(require('./Apps/Site/Handlers/Global').default);
+app.model(require('./Apps/User/Handlers/Login').default);
+app.model(require('./Apps/User/Handlers/User').default);
 
 // 4. Router
 app.router(require('./router').default);
