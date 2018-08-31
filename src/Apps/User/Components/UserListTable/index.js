@@ -1,9 +1,6 @@
 import React, { PureComponent } from 'react';
-import moment from 'moment';
-import { Table, Alert, Badge, Divider } from 'antd';
+import { Table, Alert, Divider } from 'antd';
 import styles from './index.less';
-
-const statusMap = ['default', 'processing', 'success', 'error'];
 
 class UserListTable extends PureComponent {
   state = {
@@ -20,15 +17,17 @@ class UserListTable extends PureComponent {
   }
 
   handleRowSelectChange = (selectedRowKeys, selectedRows) => {
-    if (this.props.onSelectRow) {
-      this.props.onSelectRow(selectedRows);
+    const { onSelectRow } = this.props;
+    if (onSelectRow) {
+      onSelectRow(selectedRows);
     }
 
     this.setState({ selectedRowKeys });
   };
 
   handleTableChange = (pagination, filters, sorter) => {
-    this.props.onChange(pagination, filters, sorter);
+    const { onChange } = this.props;
+    onChange(pagination, filters, sorter);
   };
 
   cleanSelectedKeys = () => {
@@ -60,25 +59,35 @@ class UserListTable extends PureComponent {
         sorter: true,
         title: '用户状态',
         dataIndex: 'status',
+        render: val => (val === 0 ? '正常' : '禁止'),
       },
       {
         title: '头像',
         dataIndex: 'avatar',
-        render: val => (
+        render: (val, record) => (
           <div>
-            <img src={val} className={styles.avatar} />
+            <img alt={record.nickname} src={val} className={styles.avatar} />
           </div>
         ),
       },
       {
         title: '操作',
-        render: () => (
-          <div>
-            <span>删除</span>
-            <Divider type="vertical" />
-            <span>编辑</span>
-          </div>
-        ),
+        render: (text, record) => {
+          let changeStatus = '';
+          const { updateStatus } = this.props;
+          if (record.status === 0) {
+            changeStatus = <a onClick={() => updateStatus(1, [record.id])}>禁止</a>;
+          } else {
+            changeStatus = <a onClick={() => updateStatus(0, [record.id])}>取消禁止</a>;
+          }
+          return (
+            <div>
+              {changeStatus}
+              <Divider type="vertical" />
+              <span>编辑</span>
+            </div>
+          );
+        },
       },
     ];
 

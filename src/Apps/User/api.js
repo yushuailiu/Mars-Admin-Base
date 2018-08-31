@@ -2,17 +2,18 @@
  * Created by liushuai <ln6265431@163.com> on 2018/8/27.
  *
  */
-import request from '../../utils/request';
 import { stringify } from 'qs';
+import request from '../../utils/request';
+
 export default {
-  async getCurUser(params) {
+  async getCurUser() {
     return request(`/admin/api/curuser`);
   },
   async login(params) {
     return request(`/admin/api/login?${stringify(params)}`);
   },
 
-  async logout(params) {
+  async logout() {
     return request(`/admin/api/logout`);
   },
 
@@ -36,5 +37,12 @@ export default {
 
   async listRole(params) {
     return request(`/admin/api/role?${stringify(params)}`);
+  },
+
+  async updateUserStatus(params) {
+    return request(`/admin/api/user/status?`, {
+      method: 'PUT',
+      body: params,
+    });
   },
 };

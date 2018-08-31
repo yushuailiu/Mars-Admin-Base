@@ -1,22 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'dva';
-import {
-  Spin,
-  Card,
-  Form,
-  Input,
-  Select,
-  Icon,
-  Button,
-  Dropdown,
-  Menu,
-  Modal,
-  message,
-  Row,
-  Col,
-  InputNumber,
-  DatePicker,
-} from 'antd';
+import { Spin, Card, Form, Input, Select, Icon, Button, Modal, message, Row, Col } from 'antd';
 import UserListTable from '../Components/UserListTable';
 import PageHeaderLayout from '../../../layouts/PageHeaderLayout';
 
@@ -24,10 +8,6 @@ import styles from './UserManager.less';
 
 const FormItem = Form.Item;
 const { Option } = Select;
-const getValue = obj =>
-  Object.keys(obj)
-    .map(key => obj[key])
-    .join(',');
 
 const CreateForm = Form.create()(props => {
   const { modalVisible, form, handleAdd, handleModalVisible, roleLoading, roleOptions } = props;
@@ -36,7 +16,6 @@ const CreateForm = Form.create()(props => {
     form.validateFields((err, fieldsValue) => {
       if (err) return;
       form.resetFields();
-      console.log(fieldsValue);
       handleAdd(fieldsValue);
     });
   };
@@ -127,8 +106,6 @@ export default class TableList extends PureComponent {
   }
 
   handleStandardTableChange = (pagination, filtersArg, sorter) => {
-    const { dispatch } = this.props;
-    const { formValues } = this.state;
     const query = {};
     if (sorter.field) {
       query.sorter = {
@@ -145,12 +122,11 @@ export default class TableList extends PureComponent {
 
   fetch = () => {
     const { dispatch } = this.props;
-    const { formValues } = this.state;
+    const { formValues, pagination, sorter } = this.state;
     const query = {
-      currentPage: this.state.pagination.currentPage,
-      pageSize: this.state.pagination.pageSize,
+      ...pagination,
       ...formValues,
-      ...this.state.sorter,
+      ...sorter,
     };
     dispatch({
       type: 'User/list',
@@ -158,36 +134,12 @@ export default class TableList extends PureComponent {
     });
   };
 
-  handleMenuClick = e => {
-    const { dispatch } = this.props;
-    const { selectedRows } = this.state;
-
-    if (!selectedRows) return;
-
-    switch (e.key) {
-      case 'remove':
-        dispatch({
-          type: 'User/remove',
-          payload: {
-            no: selectedRows.map(row => row.no).join(','),
-          },
-          callback: () => {
-            this.setState({
-              selectedRows: [],
-            });
-          },
-        });
-        break;
-      default:
-        break;
-    }
-  };
-
   handleSelectRows = rows => {
     this.setState({
       selectedRows: rows,
     });
   };
+
   handleModalVisible = flag => {
     const { dispatch } = this.props;
     this.setState({
@@ -199,12 +151,13 @@ export default class TableList extends PureComponent {
       });
     }
   };
+
   handleAdd = values => {
     const { dispatch } = this.props;
-    const fetch = this.fetch;
+    const { fetch } = this;
     fetch.bind(this);
 
-    if (values.password1 != values.password2) {
+    if (values.password1 !== values.password2) {
       message.error('两次密码不一致！');
       return;
     }
@@ -226,14 +179,37 @@ export default class TableList extends PureComponent {
     });
   };
 
+  changeSelectedUsersStatus = status => {
+    const { selectedRows } = this.state;
+    const ids = [];
+    selectedRows.forEach(item => {
+      ids.push(item.id);
+    });
+    this.changeUsersStatus(status, ids);
+  };
+
+  changeUsersStatus = (status, ids) => {
+    const { dispatch } = this.props;
+    const { fetch } = this;
+    dispatch({
+      type: 'User/updateStatus',
+      payload: {
+        ids,
+        status,
+      },
+      success: () => {
+        fetch();
+      },
+    });
+  };
+
   handleSearch = e => {
     e.preventDefault();
 
-    const { dispatch, form } = this.props;
+    const { form } = this.props;
 
     form.validateFields((err, fieldsValue) => {
       if (err) {
-        console.log(err);
         return;
       }
 
@@ -243,7 +219,6 @@ export default class TableList extends PureComponent {
         sex: fieldsValue.search_sex,
         // createdAt: fieldsValue.search_createdAt && fieldsValue.search_createdAt.valueOf(),
       };
-      console.log(values);
 
       this.setState(
         {
@@ -259,7 +234,7 @@ export default class TableList extends PureComponent {
   };
 
   handleFormReset = () => {
-    const { form, dispatch } = this.props;
+    const { form } = this.props;
     form.resetFields();
     this.setState({
       formValues: {},
@@ -374,11 +349,10 @@ export default class TableList extends PureComponent {
       User: { loading: userLoading, data },
       Role: { loading: roleLoading, list: roleList },
     } = this.props;
-    const { selectedRows, modalVisible, addInputValue } = this.state;
-    const { getFieldDecorator } = this.props.form;
+    const { selectedRows, modalVisible } = this.state;
 
     const roleOptions = [];
-    roleList.forEach(function(item) {
+    roleList.forEach(item => {
       roleOptions.push(
         <Option value={item.id} key={item.id}>
           {item.name}
@@ -386,18 +360,11 @@ export default class TableList extends PureComponent {
       );
     });
 
-    const menu = (
-      <Menu onClick={this.handleMenuClick} selectedKeys={[]}>
-        <Menu.Item key="remove">删除</Menu.Item>
-        <Menu.Item key="approval">批量审批</Menu.Item>
-      </Menu>
-    );
-
     const parentMethods = {
       handleAdd: this.handleAdd,
       handleModalVisible: this.handleModalVisible,
-      roleLoading: roleLoading,
-      roleOptions: roleOptions,
+      roleLoading,
+      roleOptions,
     };
 
     return (
@@ -411,12 +378,8 @@ export default class TableList extends PureComponent {
               </Button>
               {selectedRows.length > 0 && (
                 <span>
-                  <Button>批量操作</Button>
-                  <Dropdown overlay={menu}>
-                    <Button>
-                      更多操作 <Icon type="down" />
-                    </Button>
-                  </Dropdown>
+                  <Button onClick={() => this.changeUsersStatus(0)}>取消禁止</Button>
+                  <Button onClick={() => this.changeUsersStatus(1)}>禁止</Button>
                 </span>
               )}
             </div>
@@ -426,6 +389,7 @@ export default class TableList extends PureComponent {
               data={data}
               onSelectRow={this.handleSelectRows}
               onChange={this.handleStandardTableChange}
+              updateStatus={this.changeUsersStatus}
             />
           </div>
         </Card>

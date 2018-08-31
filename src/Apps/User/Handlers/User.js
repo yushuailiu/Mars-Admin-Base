@@ -14,6 +14,24 @@ export default {
   },
 
   effects: {
+    *updateStatus({ payload, success, fail }, { call, put }) {
+      yield put({
+        type: 'save',
+        payload: {
+          addLoading: true,
+        },
+      });
+
+      const response = yield call(api.updateUserStatus, payload);
+
+      yield put({
+        type: 'save',
+        payload: {
+          addLoading: false,
+        },
+      });
+      dealResponse(response, success, fail);
+    },
     *update({ payload, success, fail }, { call, put }) {
       yield put({
         type: 'save',
@@ -46,14 +64,12 @@ export default {
       });
       dealResponse(response, success, fail);
     },
-    *list({ payload, callback }, { select, call, put }) {
+    *list({ payload }, { call, put }) {
       yield put({
         type: 'changeLoading',
         payload: true,
       });
-      const response = yield call(api.listUser, {
-        ...payload,
-      });
+      const response = yield call(api.listUser, payload);
       yield put({
         type: 'save',
         payload: {
@@ -64,6 +80,7 @@ export default {
         type: 'changeLoading',
         payload: false,
       });
+      dealResponse(response);
     },
   },
 
