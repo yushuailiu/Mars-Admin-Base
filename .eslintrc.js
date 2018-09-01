@@ -60,6 +60,7 @@ module.exports = {
     'function-paren-newline': [0],
     'no-restricted-globals': [0],
     'require-yield': [1],
+    'no-param-reassign': [2, { props: false }],
   },
   parserOptions: {
     ecmaFeatures: {

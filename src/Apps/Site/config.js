@@ -17,5 +17,12 @@ export default {
       handlers: ['FriendLink'],
       icon: 'profile',
     },
+    {
+      path: '/site/set',
+      page: 'SiteSet',
+      name: '站点配置',
+      handlers: ['SiteSet'],
+      icon: 'setting',
+    },
   ],
 };

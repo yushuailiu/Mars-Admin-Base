@@ -3,7 +3,7 @@
  *
  */
 export default {
-  sort: 2,
+  sort: 1,
   layout: 'BasicLayout',
   path: '/dashboard',
   name: 'Dashboard',

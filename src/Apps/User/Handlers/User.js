@@ -32,14 +32,14 @@ export default {
       });
       dealResponse(response, success, fail);
     },
-    *update({ payload, success, fail }, { call, put }) {
+    *updateCurUserInfo({ payload, success, fail }, { call, put }) {
       yield put({
         type: 'save',
         payload: {
           addLoading: true,
         },
       });
-      const response = yield call(api.updateUser, {
+      const response = yield call(api.updateCurUserInfo, {
         ...payload,
       });
       yield put({
@@ -81,6 +81,26 @@ export default {
         payload: false,
       });
       dealResponse(response);
+    },
+    *curUserInfo({ payload }, { call, put }) {
+      yield put({
+        type: 'changeLoading',
+        payload: true,
+      });
+
+      const response = yield call(api.curUserInfo, payload);
+
+      yield put({
+        type: 'save',
+        payload: {
+          info: response.data,
+        },
+      });
+
+      yield put({
+        type: 'changeLoading',
+        payload: false,
+      });
     },
   },
 

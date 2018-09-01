@@ -1,15 +1,9 @@
 /**
  * Created by liushuai on 2018/2/21.
  */
-
-import { adminApiGate } from '../../../services/api';
+import api from '../api';
 import dealResponse from '../../../utils/dealResponse';
 
-// todo 如何简化
-const defaultParams = {
-  module: 'Site',
-  handler: 'FriendLink',
-};
 export default {
   namespace: 'FriendLink',
   state: {
@@ -21,18 +15,14 @@ export default {
     },
   },
   effects: {
-    *add({ payload, success, fail }, { select, call, put }) {
+    *add({ payload, success, fail }, { call, put }) {
       yield put({
         type: 'save',
         payload: {
           addLoading: true,
         },
       });
-      const response = yield call(adminApiGate, {
-        ...defaultParams,
-        method: 'add',
-        payload: payload,
-      });
+      const response = yield call(api.addFriendLink, payload);
       yield put({
         type: 'save',
         payload: {
@@ -48,37 +38,25 @@ export default {
           loading: true,
         },
       });
-      const response = yield call(adminApiGate, {
-        ...defaultParams,
-        method: 'list',
-        payload: payload,
-      });
+      const response = yield call(api.getFriendLink, payload);
+
       yield put({
         type: 'save',
         payload: {
           data: response.data,
-        },
-      });
-      yield put({
-        type: 'save',
-        payload: {
           loading: false,
         },
       });
       dealResponse(response, success, fail);
     },
-    *update({ payload, success, fail }, { select, call, put }) {
+    *update({ payload, success, fail }, { call, put }) {
       yield put({
         type: 'save',
         payload: {
           loading: true,
         },
       });
-      const response = yield call(adminApiGate, {
-        ...defaultParams,
-        method: 'update',
-        payload: payload,
-      });
+      const response = yield call(api.updateFriendLink, payload);
       yield put({
         type: 'save',
         payload: {
@@ -94,11 +72,7 @@ export default {
           loading: true,
         },
       });
-      const response = yield call(adminApiGate, {
-        ...defaultParams,
-        method: 'delete',
-        payload: payload,
-      });
+      const response = yield call(api.deleteFriendLink, payload);
       yield put({
         type: 'save',
         payload: {
@@ -107,18 +81,14 @@ export default {
       });
       dealResponse(response, success, fail);
     },
-    *updateStatusByIds({ payload, success, fail }, { select, call, put }) {
+    *updateStatusById({ payload, success, fail }, { call, put }) {
       yield put({
         type: 'save',
         payload: {
           loading: true,
         },
       });
-      const response = yield call(adminApiGate, {
-        ...defaultParams,
-        method: 'updateStatusByIds',
-        payload: payload,
-      });
+      const response = yield call(api.updateFriendLinkStatus, payload);
       yield put({
         type: 'save',
         payload: {
@@ -130,16 +100,15 @@ export default {
   },
   reducers: {
     save(state, action) {
-      const info = {
+      return {
         ...state,
         ...action.payload,
       };
-      return info;
     },
   },
   subscriptions: {
     setup({ dispatch, history }) {
-      return history.listen(({ pathname, query }) => {
+      return history.listen(() => {
         dispatch({
           type: 'save',
           payload: {

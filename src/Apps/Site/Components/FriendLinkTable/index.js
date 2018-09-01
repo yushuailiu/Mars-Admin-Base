@@ -1,5 +1,5 @@
 import React, { PureComponent, Fragment } from 'react';
-import { Table, Alert, Badge, Divider } from 'antd';
+import { Table, Alert } from 'antd';
 import styles from './index.less';
 import EditableCell from '../../../../components/EditableCell';
 
@@ -17,25 +17,6 @@ class CategoryManagerTable extends PureComponent {
     }
   }
 
-  handleRowSelectChange = (selectedRowKeys, selectedRows) => {
-    if (this.props.onSelectRow) {
-      this.props.onSelectRow(selectedRows);
-    }
-
-    this.setState({ selectedRowKeys });
-  };
-
-  handleTableChange = (pagination, filters, sorter) => {
-    this.props.onChange(pagination, filters, sorter);
-  };
-
-  cleanSelectedKeys = () => {
-    this.handleRowSelectChange([], []);
-  };
-  handleTableDelete = (id, status, e) => {
-    e.preventDefault();
-    this.props.onDelete(id, status);
-  };
   onCellChange = (id, field) => {
     const { updateInfo } = this.props;
     return (text, success, fail) => {
@@ -45,13 +26,37 @@ class CategoryManagerTable extends PureComponent {
       return updateInfo(payload, success, fail);
     };
   };
+
+  handleTableDelete = (id, status, e) => {
+    e.preventDefault();
+    const { onDelete } = this.props;
+    onDelete(id, status);
+  };
+
+  cleanSelectedKeys = () => {
+    this.handleRowSelectChange([], []);
+  };
+
+  handleTableChange = (pagination, filters, sorter) => {
+    const { onChange } = this.props;
+    onChange(pagination, filters, sorter);
+  };
+
+  handleRowSelectChange = (selectedRowKeys, selectedRows) => {
+    const { onSelectRow } = this.props;
+    if (onSelectRow) {
+      onSelectRow(selectedRows);
+    }
+
+    this.setState({ selectedRowKeys });
+  };
+
   render() {
     const { selectedRowKeys } = this.state;
     const {
       data: { list, pagination },
       loading,
     } = this.props;
-
     const columns = [
       {
         title: 'id',
@@ -69,7 +74,7 @@ class CategoryManagerTable extends PureComponent {
         title: '状态',
         dataIndex: 'status',
         render: text => {
-          if (text == 1) {
+          if (text === 1) {
             return '下线';
           } else {
             return '在线';
@@ -91,14 +96,10 @@ class CategoryManagerTable extends PureComponent {
         ),
       },
       {
-        title: '添加人',
-        dataIndex: 'add_user',
-      },
-      {
         title: '操作',
         render: (text, record) => {
           let changeStatus = '';
-          if (record.status == 0) {
+          if (record.status === 0) {
             changeStatus = (
               <a href="" onClick={e => this.handleTableDelete(record.id, 1, e)}>
                 下线
@@ -120,14 +121,6 @@ class CategoryManagerTable extends PureComponent {
       showSizeChanger: true,
       showQuickJumper: true,
       ...pagination,
-    };
-
-    const rowSelection = {
-      selectedRowKeys,
-      onChange: this.handleRowSelectChange,
-      getCheckboxProps: record => ({
-        disabled: record.disabled,
-      }),
     };
 
     return (

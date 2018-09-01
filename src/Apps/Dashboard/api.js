@@ -3,8 +3,9 @@
  *
  */
 import request from '../../utils/request';
+
 export default {
-  async statistics(params) {
+  async statistics() {
     return request(`/admin/api/site/statistics`);
   },
 };

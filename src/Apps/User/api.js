@@ -9,40 +9,44 @@ export default {
   async getCurUser() {
     return request(`/admin/api/curuser`);
   },
-  async login(params) {
-    return request(`/admin/api/login?${stringify(params)}`);
+  async login(payload) {
+    return request(`/admin/api/login?${stringify(payload)}`);
   },
 
   async logout() {
     return request(`/admin/api/logout`);
   },
 
-  async updateUser(params) {
-    return request(`/admin/api/user/${params.id}`, {
-      method: 'PUT',
-      body: params,
-    });
-  },
-
-  async addUser(params) {
+  async addUser(payload) {
     return request(`/admin/api/user`, {
       method: 'POST',
-      body: params,
+      body: payload,
     });
   },
 
-  async listUser(params) {
-    return request(`/admin/api/user?${stringify(params)}`);
+  async listUser(payload) {
+    return request(`/admin/api/user?${stringify(payload)}`);
   },
 
-  async listRole(params) {
-    return request(`/admin/api/role?${stringify(params)}`);
+  async listRole(payload) {
+    return request(`/admin/api/role?${stringify(payload)}`);
   },
 
-  async updateUserStatus(params) {
+  async updateUserStatus(payload) {
     return request(`/admin/api/user/status?`, {
       method: 'PUT',
-      body: params,
+      body: payload,
+    });
+  },
+
+  async curUserInfo() {
+    return request(`/admin/api/curuserinfo`);
+  },
+
+  async updateCurUserInfo(payload) {
+    return request(`/admin/api/curuserinfo`, {
+      method: 'PUT',
+      body: payload,
     });
   },
 };

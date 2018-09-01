@@ -1,8 +1,9 @@
-import { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { connect } from 'dva';
+import { Card, Button, Form, Modal, Input, message, InputNumber } from 'antd';
 import PageHeaderLayout from '../../../layouts/PageHeaderLayout';
-import { Card, Button, Form, Modal, Input, Cascader, message, InputNumber } from 'antd';
 import FriendLinkTable from '../Components/FriendLinkTable';
+
 const FormItem = Form.Item;
 
 @connect(state => ({
@@ -20,58 +21,37 @@ export default class FriendLink extends PureComponent {
     },
     sorter: {},
   };
-  handleModalVisible = flag => {
-    this.setState({
-      modalVisible: !!flag,
-    });
-  };
 
-  addFriendLink(flag) {
-    this.setState({
-      modalVisible: !!flag,
-    });
-  }
-
-  handleStandardTableChange = (pagination, filtersArg, sorter) => {
+  componentDidMount() {
     const { dispatch } = this.props;
-    const { formValues } = this.state;
-    const query = {};
-    if (sorter.field) {
-      query.sorter = {
-        field: sorter.field,
-        order: sorter.order,
-      };
-    }
-    query.pagination = {
-      currentPage: pagination.current,
-      pageSize: pagination.pageSize,
-    };
-    this.setState(query, this.fetch);
-  };
-
-  fetch() {
-    const { dispatch } = this.props;
-    const { formValues } = this.state;
-    const query = {
-      currentPage: this.state.pagination.currentPage,
-      pageSize: this.state.pagination.pageSize,
-      ...formValues,
-      ...this.state.sorter,
-    };
     dispatch({
       type: 'FriendLink/list',
-      payload: query,
     });
   }
 
-  handleAdd = () => {
+  updateStatusById = (id, status) => {
     const { dispatch } = this.props;
+    dispatch({
+      type: 'FriendLink/updateStatusById',
+      payload: {
+        id,
+        status,
+      },
+      success: () => {
+        this.fetch();
+      },
+    });
+  };
+
+  handleAdd = () => {
+    const { dispatch, form } = this.props;
+
     const fetch = this.fetch.bind(this);
-    this.props.form.validateFields((err, values) => {
+    form.validateFields((err, values) => {
       if (err) {
-        return;
+        return err;
       } else {
-        this.props.dispatch({
+        dispatch({
           type: 'FriendLink/add',
           payload: values,
           success: () => {
@@ -86,26 +66,37 @@ export default class FriendLink extends PureComponent {
     });
   };
 
-  updateStatusByIds = (ids, status) => {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'FriendLink/updateStatusByIds',
-      payload: {
-        ids: ids,
-        status: status,
-      },
-      success: () => {
-        this.fetch();
-      },
+  handleStandardTableChange = (pagination, filtersArg, sorter) => {
+    const query = {};
+    if (sorter.field) {
+      query.sorter = {
+        field: sorter.field,
+        order: sorter.order,
+      };
+    }
+    query.pagination = {
+      currentPage: pagination.current,
+      pageSize: pagination.pageSize,
+    };
+    this.setState(query, this.fetch);
+  };
+
+  handleModalVisible = flag => {
+    this.setState({
+      modalVisible: !!flag,
     });
   };
 
   updateInfo(payload, success, fail) {
     const { dispatch } = this.props;
+    if (payload && payload.sort) {
+      payload.sort = parseInt(payload.sort, 10);
+    }
     dispatch({
       type: 'FriendLink/update',
-      payload: payload,
+      payload,
       success: () => {
+        this.fetch();
         success();
       },
       fail: () => {
@@ -114,19 +105,34 @@ export default class FriendLink extends PureComponent {
     });
   }
 
-  componentDidMount() {
+  fetch() {
     const { dispatch } = this.props;
+    const { formValues, pagination, sorter } = this.state;
+    const query = {
+      ...pagination,
+      ...formValues,
+      ...sorter,
+    };
     dispatch({
       type: 'FriendLink/list',
+      payload: query,
+    });
+  }
+
+  addFriendLink(flag) {
+    this.setState({
+      modalVisible: !!flag,
     });
   }
 
   render() {
-    const { selectedRows, modalVisible, name, url, sort } = this.state;
+    const { selectedRows, modalVisible } = this.state;
     const {
       FriendLink: { loading, data },
     } = this.props;
-    const { getFieldDecorator } = this.props.form;
+    const {
+      form: { getFieldDecorator },
+    } = this.props;
     return (
       <PageHeaderLayout>
         <Card>
@@ -141,7 +147,7 @@ export default class FriendLink extends PureComponent {
             data={data}
             onSelectRow={this.handleSelectRows}
             onChange={this.handleStandardTableChange}
-            onDelete={this.updateStatusByIds}
+            onDelete={this.updateStatusById}
             updateInfo={this.updateInfo.bind(this)}
           />
         </Card>
@@ -157,8 +163,7 @@ export default class FriendLink extends PureComponent {
               {getFieldDecorator('name', {
                 rules: [
                   { required: true, message: '请输入链接名' },
-                  { type: 'string' },
-                  { max: 15 },
+                  { pattern: /^[\s\S]{1,15}$/, message: '请输入链接名' },
                 ],
               })(<Input placeholder="请输入链接名" />)}
             </FormItem>

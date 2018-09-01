@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Table, Alert, Divider } from 'antd';
+import { Table, Alert } from 'antd';
 import styles from './index.less';
 
 class UserListTable extends PureComponent {
@@ -80,13 +80,7 @@ class UserListTable extends PureComponent {
           } else {
             changeStatus = <a onClick={() => updateStatus(0, [record.id])}>取消禁止</a>;
           }
-          return (
-            <div>
-              {changeStatus}
-              <Divider type="vertical" />
-              <span>编辑</span>
-            </div>
-          );
+          return <div>{changeStatus}</div>;
         },
       },
     ];

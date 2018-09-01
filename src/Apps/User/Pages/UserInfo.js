@@ -2,16 +2,15 @@
  * Created by liushuai on 2018/3/2.
  */
 import React, { PureComponent } from 'react';
-import { render } from 'react-dom';
-import { Select, Spin, Upload, Form, Input, message, Button, InputNumber, Icon } from 'antd';
+import { Select, Spin, Upload, Form, Input, message, Button, Icon } from 'antd';
 import { connect } from 'dva';
 import PageHeaderLayout from '../../../layouts/PageHeaderLayout';
 import FooterToolbar from '../../../components/FooterToolbar';
-
-const Option = Select.Option;
-const TextArea = Input.TextArea;
-const FormItem = Form.Item;
 import Style from './UserInfo.less';
+
+const { Option } = Select;
+const { TextArea } = Input;
+const { Item: FormItem } = Form;
 
 @connect(state => ({
   User: state.User,
@@ -21,71 +20,15 @@ import Style from './UserInfo.less';
 export default class addPage extends PureComponent {
   state = {
     uploadImage: false,
-    content: false,
   };
 
-  markdownChange(content) {
-    const {
-      User: { info },
-      dispatch,
-    } = this.props;
+  componentDidMount() {
+    const { dispatch } = this.props;
+
     dispatch({
-      type: 'User/save',
-      payload: {
-        info: {
-          ...info,
-          content: content,
-        },
-      },
+      type: 'User/curUserInfo',
+      payload: {},
     });
-  }
-
-  handleCoverChange(fileInfo) {
-    if (fileInfo.file && fileInfo.file.response && fileInfo.file.response.success == 1) {
-      const {
-        User: { info },
-        dispatch,
-      } = this.props;
-      dispatch({
-        type: 'User/save',
-        payload: {
-          info: {
-            ...info,
-            avatar: fileInfo.file.response.url,
-          },
-        },
-      });
-    }
-  }
-  handleWeiXinPaymentChange(fileInfo) {
-    if (fileInfo.file && fileInfo.file.response && fileInfo.file.response.success == 1) {
-      const {
-        User: { info },
-        dispatch,
-      } = this.props;
-      dispatch({
-        type: 'User/save',
-        payload: {
-          info: {
-            ...info,
-            weixin_payment: fileInfo.file.response.url,
-          },
-        },
-      });
-    }
-  }
-
-  beforeUpload(file) {
-    // todo 添加更多图片类型
-    const isJPG = file.type === 'image/jpeg';
-    if (!isJPG) {
-      message.error('You can only upload JPG file!');
-    }
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('Image must smaller than 2MB!');
-    }
-    return isJPG && isLt2M;
   }
 
   normFile = e => {
@@ -95,44 +38,66 @@ export default class addPage extends PureComponent {
     return e && e.fileList;
   };
 
+  beforeUpload = file => {
+    // todo 添加更多图片类型
+    const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isJPG) {
+      message.error('You can only upload JPG file!');
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Image must smaller than 2MB!');
+    }
+    return isJPG && isLt2M;
+  };
+
+  handleCoverChange(fileInfo) {
+    if (fileInfo.file && fileInfo.file.response && fileInfo.file.response.data.length === 1) {
+      const {
+        User: { info },
+        dispatch,
+      } = this.props;
+      dispatch({
+        type: 'User/save',
+        payload: {
+          info: {
+            ...info,
+            avatar: fileInfo.file.response.data[0],
+          },
+        },
+      });
+    }
+  }
+
   submit() {
     const {
       User: { info },
       dispatch,
+      form,
     } = this.props;
-    this.props.form.validateFields((err, fieldsValue) => {
+    form.validateFields((err, fieldsValue) => {
       if (err) {
         message.warn('请正确填写信息');
         return;
       }
       fieldsValue.avatar = info.avatar;
-      fieldsValue.weixin_payment = info.weixin_payment;
       dispatch({
-        type: 'User/update',
+        type: 'User/updateCurUserInfo',
         payload: fieldsValue,
       });
     });
   }
 
-  componentDidMount() {
-    const { dispatch, history } = this.props;
-    const userId = this.props.match.params.userId;
-
-    dispatch({
-      type: 'User/curUserInfo',
-      payload: {},
-      success: function() {},
-    });
-  }
-
   render = () => {
-    const { getFieldDecorator } = this.props.form;
+    const {
+      form: { getFieldDecorator },
+    } = this.props;
     const {
       User: { info, addLoading },
     } = this.props;
     const sexList = ['保密', '男', '女'];
     const options = [];
-    sexList.forEach(function(item, index) {
+    sexList.forEach((item, index) => {
       options.push(
         <Option key={item} value={index}>
           {item}
@@ -143,9 +108,7 @@ export default class addPage extends PureComponent {
     const avatarUploadData = {
       source: 'avatar',
     };
-    const weixinUploadData = {
-      source: 'weixin-payment',
-    };
+
     const fileList = [];
     let coverImageUrl = '';
     if (info.avatar) {
@@ -157,21 +120,11 @@ export default class addPage extends PureComponent {
       });
     }
 
-    const paymentFileList = [];
-
-    let paymentImageUrl = '';
-    if (info.weixin_payment) {
-      paymentImageUrl = info.weixin_payment;
-      paymentFileList.push({
-        response: {
-          url: info.weixin_payment,
-        },
-      });
-    }
+    const { uploadImage, width } = this.state;
 
     const uploadButton = (
       <div>
-        <Icon type={this.state.uploadImage ? 'loading' : 'plus'} />
+        <Icon type={uploadImage ? 'loading' : 'plus'} />
         <div className="ant-upload-text">Upload</div>
       </div>
     );
@@ -201,6 +154,30 @@ export default class addPage extends PureComponent {
                   </Select>
                 )}
               </FormItem>
+
+              <FormItem labelCol={{ span: 4 }} wrapperCol={{ span: 8 }} label="邮箱">
+                {getFieldDecorator('email', {
+                  rules: [
+                    { required: true, message: '请输入邮箱' },
+                    {
+                      pattern: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/,
+                      message: '请输入正确的邮箱',
+                    },
+                  ],
+                  initialValue: info.email,
+                })(<Input placeholder="请输入邮箱" />)}
+              </FormItem>
+
+              <FormItem labelCol={{ span: 4 }} wrapperCol={{ span: 8 }} label="手机号">
+                {getFieldDecorator('phone', {
+                  rules: [
+                    { required: true, message: '请输入手机号' },
+                    { pattern: /^1[\d]{10}$/, message: '请输入正确的手机号' },
+                  ],
+                  initialValue: info.phone,
+                })(<Input placeholder="请输入手机号" />)}
+              </FormItem>
+
               <FormItem labelCol={{ span: 4 }} wrapperCol={{ span: 8 }} label="简介">
                 {getFieldDecorator('intro', {
                   rules: [
@@ -222,7 +199,7 @@ export default class addPage extends PureComponent {
                     name="avatar"
                     listType="picture-card"
                     showUploadList={false}
-                    action="/site/upload"
+                    action="/admin/api/image/upload"
                     beforeUpload={this.beforeUpload}
                     onChange={this.handleCoverChange.bind(this)}
                     data={avatarUploadData}
@@ -235,32 +212,8 @@ export default class addPage extends PureComponent {
                   </Upload>
                 )}
               </FormItem>
-              <FormItem labelCol={{ span: 4 }} wrapperCol={{ span: 8 }} label="支付码">
-                {getFieldDecorator('weixin_payment', {
-                  valuePropName: 'fileList',
-                  getValueFromEvent: this.normFile,
-                  rules: [{ type: 'array', required: false, message: '请上传封面!' }],
-                  initialValue: paymentFileList,
-                })(
-                  <Upload
-                    name="avatar"
-                    listType="picture-card"
-                    showUploadList={false}
-                    action="/site/upload"
-                    beforeUpload={this.beforeUpload}
-                    onChange={this.handleWeiXinPaymentChange.bind(this)}
-                    data={weixinUploadData}
-                  >
-                    {paymentImageUrl ? (
-                      <img className={Style.cover} src={paymentImageUrl} alt="" />
-                    ) : (
-                      uploadButton
-                    )}
-                  </Upload>
-                )}
-              </FormItem>
             </Form>
-            <FooterToolbar style={{ width: this.state.width }}>
+            <FooterToolbar style={{ width }}>
               <Button type="primary" onClick={this.submit.bind(this)} loading={false}>
                 提交
               </Button>
