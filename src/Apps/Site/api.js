@@ -33,7 +33,7 @@ export default {
   },
 
   async updateFriendLink(payload) {
-    return request(`/admin/api/site/friendlink/${payload}`, {
+    return request(`/admin/api/site/friendlink/${payload.id}`, {
       method: 'PUT',
       body: payload,
     });

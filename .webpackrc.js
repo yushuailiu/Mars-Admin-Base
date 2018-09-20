@@ -28,7 +28,7 @@ export default {
   hash: true,
   proxy: {
     '/admin/api/*': {
-      target: 'http://127.0.0.1:8099/',
+      target: 'http://127.0.0.1:8082/',
       changeOrigin: true,
     },
   },
